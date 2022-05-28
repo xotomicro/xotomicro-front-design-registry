@@ -1,0 +1,81 @@
+name: ci-cl
+
+on:
+    push:
+        branches:
+            - development
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - uses: actions/cache@v2
+              with:
+                  path: "**/node_modules"
+                  key: ${{ runner.os }}-modules-${{ hashFiles('**/package.json') }}
+
+            - name: initialize npm
+              run: npm set "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}"
+
+            - name: install packages
+              run: yarn install --pure-lockfile
+
+            - name: run tests
+              run: yarn test:service
+
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - uses: actions/cache@v2
+              with:
+                  path: "**/node_modules"
+                  key: ${{ runner.os }}-modules-${{ hashFiles('**/package.json') }}
+
+            - name: initialize npm
+              run: |
+                  npm set "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}"
+                  git config user.name "${{ github.actor }}"
+                  git config user.email "${{ github.actor}}@users.noreply.github.com"
+
+            - name: install dependencies and create build bundle
+              run: |
+                  yarn install
+                  if [[ $(git diff --stat) != '' ]]; then
+                    git add .
+                    git commit -m "pipeline auto update"
+                    git push
+                  else
+                    echo "pipeline did not need auto update"
+                  fi
+                  yarn build
+
+            - uses: JS-DevTools/npm-publish@v1
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  registry: "https://npm.pkg.github.com"
+
+    notify:
+        name: notify
+        runs-on: ubuntu-latest
+        needs:
+            - test
+            - publish
+        if: ${{ always() }}
+
+        steps:
+            - name: notify
+              uses: nobrayner/discord-webhook@v1
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  discord-webhook: https://discord.com/api/webhooks/953749226091839509/YetogtIiyL2NmIl0GLpCmwIGx16PPaRZyndTpvtXFFVGT_G4T4l5EHby8NbbGC1xoHFf
+                  username: "xotomicro"
+                  title: "${{ github.workflow }}: {{STATUS}}"
+                  description: "${{ github.event_name }} trigged this {{STATUS}}!"
+                  include-details: "true"
+                  color-success: "#4287f5"
+                  color-failure: "eb4034"
+                  color-cancelled: "0x42daf5"
