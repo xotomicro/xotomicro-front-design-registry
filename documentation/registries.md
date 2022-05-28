@@ -4,7 +4,7 @@
 
 ```shell
 # setup your npm registry with personal token:
-npm set "//npm.pkg.github.com/:_authToken=${ASK_FOR_GITHUB_TOKEN}"
+npm set "//npm.pkg.github.com/:_authToken=${ASKED_GITHUB_TOKEN}"
 ```
 
 ## 🚀 SET UP REGISTRY - LOGIN
@@ -13,7 +13,7 @@ npm set "//npm.pkg.github.com/:_authToken=${ASK_FOR_GITHUB_TOKEN}"
 
 ```shell
 # username: github's username - xotosphere
-# password: a token generated there : https://github.com/settings/tokens - ${ASK_FOR_GITHUB_TOKEN}
+# password: a token generated there : https://github.com/settings/tokens - ${ASKED_GITHUB_TOKEN}
 npm login --registry=https://npm.pkg.github.com --scope=@xotomicro
 ```
 
